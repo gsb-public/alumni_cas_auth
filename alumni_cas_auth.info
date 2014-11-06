@@ -1,0 +1,5 @@
+name = Alumni Cas Auth
+package = Authentication
+core = 7.x
+description = "Provides single sign-on via Alumni Cas"
+configure = admin/config/people/alumni-cas-auth

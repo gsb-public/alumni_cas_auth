@@ -1,0 +1,82 @@
+<?php
+
+
+/**
+ * Implementation of hook_init
+ * Redirect to cas if not authenicated
+ * Log in user if cas authenicated successfull
+ */
+function alumni_cas_auth_init() {
+	global $user;	
+
+	if (isset($user->uid)) {
+		// user is logged in, nothing more to do
+		return;
+	}
+
+	$alumni_cas_user = alumni_cas_auth_user_init();
+
+	// check if we are returning from a cas login
+	if ($alumni_cas_user->returning_from_cas_login()) {
+
+		// check authenication response from cas
+		if (!$alumni_cas_user->is_authenicated()) {
+			// authenicate the cas user
+			$alumni_cas_user->authenicate($next_url);
+		}
+
+		$user = alumni_cas_auth_load_user($alumni_cas_user);
+		if ($user->uid) {
+			user_login_finalize();
+		}
+
+	} else {
+
+		// authenicate the cas user
+		$alumni_cas_user->authenicate($next_url);
+	
+	}
+
+}
+
+/**
+ * Initialize AlumniCasUser.
+ *
+ * Will load a AlumniCasUser object.
+ */
+function alumni_cas_auth_user_init() {
+
+	module_load_include('inc', 'alumni_cas_auth', 'alumni_cas_user');
+
+  // Load AlumniCasUser
+  return new AlumniCasUser();
+
+}
+
+function alumni_cas_auth_load_user($alumni_cas_user) {
+
+	$name = 'cas-' . $alumni_cas_user->get_stanford_id();
+
+	$found_user = user_load_by_name($name);
+	if ($found_user) {
+		return $found_user;
+	}
+
+  $new_user = user_save('', array(
+      'name' => $name,
+      'pass' => '',
+      'mail' => '',
+      'init' => $name,
+      'status' => 1,
+      'roles' => array()),
+    	'account'
+    );
+
+  $new_user = user_save($new_user, array(
+  	'name' => 'cas-' . $new_user->uid, 
+  	'init' => 'cas-' . $new_user->uid, 
+  	'mail' => 'cas-' . $new_user->uid . '@fake.fake'
+  ));
+  
+  return $new_user;
+}
