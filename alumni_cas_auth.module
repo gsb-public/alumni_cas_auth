@@ -8,26 +8,17 @@
  */
 function alumni_cas_auth_init() {
   global $user;	
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init 0');
-  watchdog(WATCHDOG_INFO, 'request uri = ' . $_SERVER['REQUEST_URI']); 
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init 1');
   $pos = strpos($_SERVER['REQUEST_URI'], 'programs/mba');
   if ($pos === false) {  
-    watchdog(WATCHDOG_INFO, 'alumni_cas_auth_init falling out to return'); 
     return;
   }    
-  if (isset($_GET['uebc'])) {
-    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init uebc TRUE');
-  }
   if (user_is_logged_in()) {//if (isset($user->uid)) {
     // user is logged in, nothing more to do
-    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init user is logged in');
     return;
   }
   $alumni_cas_user = alumni_cas_auth_user_init();
   // check if we are returning from a cas login
   if ($alumni_cas_user->returning_from_cas_login()) {
-    watchdog(WATCHDOG_INFO, 'returning from cas');
     // check authenication response from cas
     if (!$alumni_cas_user->is_authenicated()) {
       // authenicate the cas user
@@ -35,12 +26,9 @@ function alumni_cas_auth_init() {
     }
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
-      watchdog(WATCHDOG_INFO, 'calling user_login_finalize');
       user_login_finalize();
-      watchdog(WATCHDOG_INFO, 'after calling user_login_finalize');
     }
   } else {
-    watchdog(WATCHDOG_INFO, 'call cas to authenicate');
     // authenicate the cas user
     $alumni_cas_user->authenicate();
   }
@@ -58,14 +46,11 @@ function alumni_cas_auth_user_init() {
 }
 
 function alumni_cas_auth_load_user($alumni_cas_user) {
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user');
   $name = 'cas-' . $alumni_cas_user->get_stanford_id();
   $found_user = user_load_by_name($name);
   if ($found_user) {
-    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user - user found');
     return $found_user;
   }
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user - saving new user = ' . $name );
   $new_user = user_save('', array(
     'name' => $name,
     'pass' => '',
@@ -74,6 +59,5 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
     'status' => 1,
     'roles' => array())
   );
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user - returning new user 0 user id = ' . $new_user->uid);
   return $new_user;
 }
