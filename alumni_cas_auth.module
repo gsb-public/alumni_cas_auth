@@ -12,7 +12,7 @@ function alumni_cas_auth_init() {
   if ($pos === false) {  
     return;
   }    
-  if (user_is_logged_in()) {//if (isset($user->uid)) {
+  if (user_is_logged_in()) {
     // user is logged in, nothing more to do
     return;
   }
