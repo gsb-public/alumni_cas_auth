@@ -47,6 +47,7 @@ function alumni_cas_auth_user_init() {
 
 function alumni_cas_auth_load_user($alumni_cas_user) {
   $name = 'cas-' . $alumni_cas_user->get_stanford_id();
+  $user_name = _alumni_cas_auth_get_user_name($data_url);
   $found_user = user_load_by_name($name);
   if ($found_user) {
     return $found_user;
@@ -60,4 +61,12 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
     'roles' => array())
   );
   return $new_user;
+}
+
+function _alumni_cas_auth_get_user_name($url) {
+  $return = drupal_http_request($url);
+  if ($return->code == 200) {
+    return $return->data
+  }
+  return '';
 }

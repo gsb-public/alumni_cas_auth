@@ -3,6 +3,8 @@
 class AlumniCasUser {
 
   private $stanford_id;
+  private $user_id;
+  private $timestamp;
 
   public function __construct() {
   }
@@ -17,6 +19,8 @@ class AlumniCasUser {
   public function is_authenicated() {  
     if (cas_is_authenicated()) {
       $this->set_stanford_id(cas_get_stanford_id());
+      $this->set_user_id(cas_get_user_id());
+      $this->set_timestamp(cas_get_timestamp());
       return TRUE;
     }
     return FALSE;
@@ -35,6 +39,22 @@ class AlumniCasUser {
 
   public function get_stanford_id() {
     return $this->stanford_id;
-  }  
+  }
+
+  public function set_user_id($id) {
+    $this->user_id = $id;
+  }
+
+  public function get_user_id() {
+    return $this->user_id;
+  }
+
+  public function set_timestamp($timestamp) {
+    $this->timestamp = $timestamp;
+  }
+
+  public function get_timestamp() {
+    return $this->timestamp;
+  }
 
 }
