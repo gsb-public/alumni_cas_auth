@@ -46,8 +46,9 @@ function alumni_cas_auth_user_init() {
 }
 
 function alumni_cas_auth_load_user($alumni_cas_user) {
-  $name = 'cas-' . $alumni_cas_user->get_stanford_id();
+  $data_url = cas_get_data_url($user_id);
   $user_name = _alumni_cas_auth_get_user_name($data_url);
+  $name = 'cas-' . $alumni_cas_user->get_stanford_id();
   $found_user = user_load_by_name($name);
   if ($found_user) {
     return $found_user;
