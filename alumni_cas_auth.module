@@ -17,6 +17,21 @@ function alumni_cas_auth_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'alumni_cas_auth.admin.inc',
   );
+  /*
+  $items['alumni-cas-login'] = array(
+    'path' => 'alumni-cas-login',
+    'title' => 'Alumni Cas Login',
+    'page callback' => 'alumni_cas_auth_login_page',
+    'access callback' => 'user_is_anonymous',
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  $items['alumni-cas-logout'] = array(
+    'title' => 'Alumni Cas Logout',
+    'page callback' => 'alumni_cas_auth_logout',
+    'access callback' => 'alumni_cas_auth_user_is_logged_in',
+    'type' => MENU_SUGGESTED_ITEM,
+  );
+  */
   return $items;
 }
 
@@ -40,8 +55,7 @@ function alumni_cas_auth_permission() {
  */
 function alumni_cas_auth_init() {
   global $user;	
-  $pos = strpos($_SERVER['REQUEST_URI'], 'programs/mba');
-  if ($pos === false) {  
+  if (!_alumni_cas_auth_force_login()) {
     return;
   }    
   if (user_is_logged_in()) {
@@ -102,4 +116,49 @@ function _alumni_cas_auth_get_user_name($url) {
     return $return->data;
   }
   return '';
+}
+
+/**
+ * Determine if we should require the user be authenticated.
+ *
+ * @return
+ *   TRUE if we should require the user be authenticated, FALSE otherwise.
+ */
+function _alumni_cas_auth_force_login() {
+  // The 'alumni_cas_auth' page is a shortcut to force authentication.
+  if (arg(0) == 'alumni-cas-login') {
+    return TRUE;
+  }
+
+  // Do not force login for XMLRPC, Cron, or Drush.
+  if (stristr($_SERVER['SCRIPT_FILENAME'], 'xmlrpc.php')) {
+    return FALSE;
+  }
+  if (stristr($_SERVER['SCRIPT_FILENAME'], 'cron.php')) {
+    return FALSE;
+  }
+  if (function_exists('drush_verify_cli') && drush_verify_cli()) {
+    return FALSE;
+  }
+
+  // Excluded page do not need login.
+  if ($pages = variable_get('alumni_cas_auth_exclude', ALUMNI_CAS_AUTH_EXCLUDE)) {
+    $path = drupal_get_path_alias($_GET['q']);
+    if (drupal_match_path($path, $pages)) {
+      return FALSE;
+    }
+  }
+
+  // Set the default behavior.
+  $force_login = variable_get('alumni_cas_auth_access', 0);
+
+  // If we match the speficied paths, reverse the behavior.
+  if ($pages = variable_get('alumni_cas_auth_pages', '')) {
+    $path = drupal_get_path_alias($_GET['q']);
+    if (drupal_match_path($path, $pages)) {
+      $force_login = !$force_login;
+    }
+  }
+
+  return $force_login;
 }
