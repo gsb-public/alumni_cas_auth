@@ -1,5 +1,37 @@
 <?php
 
+define('ALUMNI_CAS_AUTH_EXCLUDE', 'services/*');
+
+/**
+ * Implements hook_menu().
+ */
+function alumni_cas_auth_menu() {
+  global $user;
+  $items = array();
+  $items['admin/config/people/alumni-cas-auth'] = array(
+    'title' => 'Alumni Cas Auth settings',
+    'description' => 'Configure Alumni Cas Auth settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('alumni_cas_auth_admin_settings'),
+    'access arguments' => array('administer alumni cas auth'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'alumni_cas_auth.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function alumni_cas_auth_permission() {
+  return array(
+    'administer alumni cas auth' => array(
+      'title' => t('Administer Cas Auth settings'),
+      'description' => t('Configure redirection, login/logout redirection, and other settings.'),
+      'restrict access' => TRUE,
+    )
+  );
+}
 
 /**
  * Implementation of hook_init
@@ -67,7 +99,7 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
 function _alumni_cas_auth_get_user_name($url) {
   $return = drupal_http_request($url);
   if ($return->code == 200) {
-    return $return->data
+    return $return->data;
   }
   return '';
 }
