@@ -92,13 +92,11 @@ function alumni_cas_auth_user_init() {
 }
 
 function alumni_cas_auth_load_user($alumni_cas_user) {
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user 0');
-  $user_id = $alumni_cas_user->get_user_id();
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user 1');
   $data_url = cas_get_data_url($user_id);
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user 2');
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user data_url = ' . $data_url);
   $user_name = _alumni_cas_auth_get_user_name($data_url);
+  $user_name = str_replace('OK:', '', $user_name);
+  $user_name = trim($user_name);
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user user_name = ' . $user_name);
   $name = 'cas-' . $alumni_cas_user->get_stanford_id();
   $found_user = user_load_by_name($name);
@@ -106,13 +104,14 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
     return $found_user;
   }
   $new_user = user_save('', array(
-    'name' => $name,
+    'name' => $user_name . ' ' . substr($user_id,-4),
     'pass' => '',
-    'mail' => $name . '@fake.fake',
-    'init' => $name,
+    'mail' => $user_name . '@alumni.example.com',
+    'init' => $user_name,
     'status' => 1,
-    'roles' => array())
+    'roles' => array('alumnipg'))
   );
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $user_name . ' ' . substr($user_id,-4));
   return $new_user;
 }
 
