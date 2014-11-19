@@ -92,6 +92,8 @@ function alumni_cas_auth_user_init() {
 }
 
 function alumni_cas_auth_load_user($alumni_cas_user) {
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user');
+  $user_id = $alumni_cas_user->get_user_id();
   $data_url = cas_get_data_url($user_id);
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user data_url = ' . $data_url);
   $user_name = _alumni_cas_auth_get_user_name($data_url);
