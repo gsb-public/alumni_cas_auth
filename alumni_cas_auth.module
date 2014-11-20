@@ -54,10 +54,10 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
-  global $user;	
+  global $user;
   if (!_alumni_cas_auth_force_login()) {
     return;
-  }    
+  }
   if (user_is_logged_in()) {
     // user is logged in, nothing more to do
     return;
@@ -105,14 +105,15 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   if ($found_user) {
     return $found_user;
   }
+  $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
     'name' => $user_name . ' ' . substr($user_id,-4),
     'pass' => '',
     'mail' => $user_name . '@alumni.example.com',
     'init' => $user_name,
     'status' => 1,
-    'roles' => array('alumnipg'))
-  );
+    'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
+  ));
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $user_name . ' ' . substr($user_id,-4));
   return $new_user;
 }
