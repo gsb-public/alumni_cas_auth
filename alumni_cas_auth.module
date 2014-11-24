@@ -44,6 +44,11 @@ function alumni_cas_auth_permission() {
       'title' => t('Administer Cas Auth settings'),
       'description' => t('Configure redirection, login/logout redirection, and other settings.'),
       'restrict access' => TRUE,
+    ),
+    'download alumni cas private files' => array(
+      'title' => t('Download Alumni Cas Private Files'),
+      'description' => t('Allow access to Alumni Cas Private Files.'),
+      'restrict access' => TRUE,
     )
   );
 }
@@ -160,7 +165,7 @@ function _alumni_cas_auth_force_login() {
   // Set the default behavior.
   $force_login = variable_get('alumni_cas_auth_access', 0);
 
-  // If we match the speficied paths, reverse the behavior.
+  // If we match the specified paths, reverse the behavior.
   if ($pages = variable_get('alumni_cas_auth_pages', '')) {
     $path = drupal_get_path_alias($_GET['q']);
     if (drupal_match_path($path, $pages)) {
@@ -168,5 +173,22 @@ function _alumni_cas_auth_force_login() {
     }
   }
 
+  if ($private_files_path = variable_get('alumni_cas_auth_private_files', '')) {
+    $path = drupal_get_path_alias($_GET['q']);
+    $private_files_path = 'system/files/' . $private_files_path;
+    if (drupal_match_path($path, $private_files_path)) {
+      $force_login = !$force_login;
+    }
+  }
+
   return $force_login;
+}
+
+function alumni_cas_auth_file_download($uri, $field_type = 'file') {
+  if (variable_get('alumni_cas_auth_check_private_file_access', 1) && drupal_match_path($uri,'private://' . variable_get('alumni_cas_auth_private_files_base_path', ''))) {
+    if (!user_access('download alumni cas private files')) {
+      return -1;
+    }
+  }
+  return null;
 }
