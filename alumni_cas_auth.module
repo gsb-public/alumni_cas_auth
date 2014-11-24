@@ -54,29 +54,8 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
-  global $user;
-  if (!_alumni_cas_auth_force_login()) {
-    return;
-  }
-  if (user_is_logged_in()) {
-    // user is logged in, nothing more to do
-    return;
-  }
-  $alumni_cas_user = alumni_cas_auth_user_init();
-  // check if we are returning from a cas login
-  if ($alumni_cas_user->returning_from_cas_login()) {
-    // check authenication response from cas
-    if (!$alumni_cas_user->is_authenicated()) {
-      // authenicate the cas user
-      $alumni_cas_user->authenicate();
-    }
-    $user = alumni_cas_auth_load_user($alumni_cas_user);
-    if ($user->uid) {
-      user_login_finalize();
-    }
-  } else {
-    // authenicate the cas user
-    $alumni_cas_user->authenicate();
+  if (_alumni_cas_auth_force_login()) {
+    alumni_cas_auth_login();
   }
 }
 
@@ -116,6 +95,30 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   ));
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $user_name . ' ' . substr($user_id,-4));
   return $new_user;
+}
+
+function alumni_cas_auth_login() {
+  global $user;
+  if (user_is_logged_in()) {
+    // user is logged in, nothing more to do
+    return;
+  }
+  $alumni_cas_user = alumni_cas_auth_user_init();
+  // check if we are returning from a cas login
+  if ($alumni_cas_user->returning_from_cas_login()) {
+    // check authenication response from cas
+    if (!$alumni_cas_user->is_authenicated()) {
+      // authenicate the cas user
+      $alumni_cas_user->authenicate();
+    }
+    $user = alumni_cas_auth_load_user($alumni_cas_user);
+    if ($user->uid) {
+      user_login_finalize();
+    }
+  } else {
+    // authenicate the cas user
+    $alumni_cas_user->authenicate();
+  }
 }
 
 function _alumni_cas_auth_get_user_name($url) {
@@ -169,4 +172,16 @@ function _alumni_cas_auth_force_login() {
   }
 
   return $force_login;
+}
+
+/**
+ * Implementation of hook_gsb_restricted_pages_info
+ * Returns login callback for GSB Restricted Pages
+ */
+function alumni_cas_auth_gsb_restricted_pages_info() {
+  return array(
+    'alumni' => array(
+      'callback' => 'alumni_cas_auth_login',
+    ),
+  );
 }
