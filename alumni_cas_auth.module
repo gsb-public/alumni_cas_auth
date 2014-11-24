@@ -173,11 +173,12 @@ function _alumni_cas_auth_force_login() {
     }
   }
 
+  // If we match the private files path, force login
   if ($private_files_path = variable_get('alumni_cas_auth_private_files', '')) {
     $path = drupal_get_path_alias($_GET['q']);
     $private_files_path = 'system/files/' . $private_files_path;
     if (drupal_match_path($path, $private_files_path)) {
-      $force_login = !$force_login;
+      $force_login = 1;
     }
   }
 
