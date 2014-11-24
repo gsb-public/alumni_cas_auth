@@ -59,7 +59,6 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
-  //watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init');
   if (_alumni_cas_auth_force_login()) {
     alumni_cas_auth_login();
   }
