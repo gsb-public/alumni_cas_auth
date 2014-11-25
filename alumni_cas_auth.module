@@ -59,6 +59,7 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
+  //watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init');
   if (_alumni_cas_auth_force_login()) {
     alumni_cas_auth_login();
   }
@@ -84,21 +85,23 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   $user_name = str_replace('OK:', '', $user_name);
   $user_name = trim($user_name);
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user user_name = ' . $user_name);
-  $name = 'cas-' . $alumni_cas_user->get_stanford_id();
+  $name = $user_name . ' ' . substr($user_id,-4);
   $found_user = user_load_by_name($name);
   if ($found_user) {
+    watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user found user');
     return $found_user;
   }
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user no user found');
   $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
-    'name' => $user_name . ' ' . substr($user_id,-4),
+    'name' => $name,
     'pass' => '',
     'mail' => $user_name . '@alumni.example.com',
     'init' => $user_name,
     'status' => 1,
     'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
   ));
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $user_name . ' ' . substr($user_id,-4));
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $name);
   return $new_user;
 }
 
@@ -141,6 +144,9 @@ function _alumni_cas_auth_get_user_name($url) {
  *   TRUE if we should require the user be authenticated, FALSE otherwise.
  */
 function _alumni_cas_auth_force_login() {
+
+  //watchdog(WATCHDOG_INFO, 'in _alumni_cas_auth_force_login');
+
   // The 'alumni_cas_auth' page is a shortcut to force authentication.
   if (arg(0) == 'alumni-cas-login') {
     return TRUE;
