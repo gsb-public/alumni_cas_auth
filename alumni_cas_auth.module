@@ -44,6 +44,11 @@ function alumni_cas_auth_permission() {
       'title' => t('Administer Cas Auth settings'),
       'description' => t('Configure redirection, login/logout redirection, and other settings.'),
       'restrict access' => TRUE,
+    ),
+    'download alumni cas private files' => array(
+      'title' => t('Download Alumni Cas Private Files'),
+      'description' => t('Allow access to Alumni Cas Private Files.'),
+      'restrict access' => TRUE,
     )
   );
 }
@@ -54,6 +59,7 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
+  //watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init');
   if (_alumni_cas_auth_force_login()) {
     alumni_cas_auth_login();
   }
@@ -79,21 +85,23 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   $user_name = str_replace('OK:', '', $user_name);
   $user_name = trim($user_name);
   watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user user_name = ' . $user_name);
-  $name = 'cas-' . $alumni_cas_user->get_stanford_id();
+  $name = $user_name . ' ' . substr($user_id,-4);
   $found_user = user_load_by_name($name);
   if ($found_user) {
+    watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user found user');
     return $found_user;
   }
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user no user found');
   $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
-    'name' => $user_name . ' ' . substr($user_id,-4),
+    'name' => $name,
     'pass' => '',
     'mail' => $user_name . '@alumni.example.com',
     'init' => $user_name,
     'status' => 1,
     'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
   ));
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $user_name . ' ' . substr($user_id,-4));
+  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $name);
   return $new_user;
 }
 
@@ -136,6 +144,9 @@ function _alumni_cas_auth_get_user_name($url) {
  *   TRUE if we should require the user be authenticated, FALSE otherwise.
  */
 function _alumni_cas_auth_force_login() {
+
+  //watchdog(WATCHDOG_INFO, 'in _alumni_cas_auth_force_login');
+
   // The 'alumni_cas_auth' page is a shortcut to force authentication.
   if (arg(0) == 'alumni-cas-login') {
     return TRUE;
@@ -163,7 +174,7 @@ function _alumni_cas_auth_force_login() {
   // Set the default behavior.
   $force_login = variable_get('alumni_cas_auth_access', 0);
 
-  // If we match the speficied paths, reverse the behavior.
+  // If we match the specified paths, reverse the behavior.
   if ($pages = variable_get('alumni_cas_auth_pages', '')) {
     $path = drupal_get_path_alias($_GET['q']);
     if (drupal_match_path($path, $pages)) {
@@ -171,7 +182,27 @@ function _alumni_cas_auth_force_login() {
     }
   }
 
+  // If we match the private files path, force login
+  if ($private_files_path = variable_get('alumni_cas_auth_private_files_base_path', '')) {
+    $path = drupal_get_path_alias($_GET['q']);
+    $private_files_path = 'system/files/' . $private_files_path;
+    //watchdog(WATCHDOG_INFO, 'path = ' . $path);
+    //watchdog(WATCHDOG_INFO, 'private_files_path = ' . $private_files_path);
+    if (drupal_match_path($path, $private_files_path)) {
+      $force_login = 1;
+    }
+  }
+
   return $force_login;
+}
+
+function alumni_cas_auth_file_download($uri, $field_type = 'file') {
+  if (variable_get('alumni_cas_auth_check_private_file_access', 1) && drupal_match_path($uri,'private://' . variable_get('alumni_cas_auth_private_files_base_path', ''))) {
+    if (!user_access('download alumni cas private files')) {
+      return -1;
+    }
+  }
+  return null;
 }
 
 /**
