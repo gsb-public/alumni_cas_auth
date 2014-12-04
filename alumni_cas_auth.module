@@ -17,21 +17,24 @@ function alumni_cas_auth_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'alumni_cas_auth.admin.inc',
   );
-  /*
-  $items['alumni-cas-login'] = array(
-    'path' => 'alumni-cas-login',
-    'title' => 'Alumni Cas Login',
-    'page callback' => 'alumni_cas_auth_login_page',
-    'access callback' => 'user_is_anonymous',
+  $items['alumni-cas-auth-check-auth'] = array(
+    'title' => 'Alumni Cas Check Authenication',
+    'page callback' => 'alumni_cas_auth_check_authentication',
+    'access callback' => TRUE,
     'type' => MENU_SUGGESTED_ITEM,
   );
-  $items['alumni-cas-logout'] = array(
+  $items['alumni-cas-auth-logout'] = array(
     'title' => 'Alumni Cas Logout',
-    'page callback' => 'alumni_cas_auth_logout',
-    'access callback' => 'alumni_cas_auth_user_is_logged_in',
+    'page callback' => 'alumni_cas_auth_logout_action',
+    'access callback' => TRUE,
     'type' => MENU_SUGGESTED_ITEM,
   );
-  */
+  $items['alumni-cas-auth-login'] = array(
+    'title' => 'Alumni Cas Login',
+    'page callback' => 'alumni_cas_auth_login_action',
+    'access callback' => TRUE,
+    'type' => MENU_SUGGESTED_ITEM,
+  );
   return $items;
 }
 
@@ -59,6 +62,12 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
+  drupal_add_js(drupal_get_path('module', 'alumni_cas_auth') . '/js/alumni_cas_auth.js');
+  $settings = array (
+    'path' => base_path(),
+    'current_path_alias' => drupal_get_path_alias(current_path()),
+  );
+  drupal_add_js( array ("alumni_cas_auth" => $settings), 'setting');
   if (_alumni_cas_auth_force_login()) {
     alumni_cas_auth_login();
   }
@@ -66,8 +75,6 @@ function alumni_cas_auth_init() {
 
 /**
  * Initialize AlumniCasUser.
- *
- * Will load a AlumniCasUser object.
  */
 function alumni_cas_auth_user_init() {
   // Load AlumniCasUser
@@ -75,22 +82,24 @@ function alumni_cas_auth_user_init() {
   return new AlumniCasUser();
 }
 
+/**
+ * Loads the Drupal user associated with this Cas user
+ */
 function alumni_cas_auth_load_user($alumni_cas_user) {
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user');
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user 0');
   $user_id = $alumni_cas_user->get_user_id();
   $data_url = cas_get_data_url($user_id);
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user data_url = ' . $data_url);
   $user_name = _alumni_cas_auth_get_user_name($data_url);
   $user_name = str_replace('OK:', '', $user_name);
   $user_name = trim($user_name);
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user user_name = ' . $user_name);
   $name = $user_name . ' ' . substr($user_id,-4);
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user name = ' . $name);
   $found_user = user_load_by_name($name);
   if ($found_user) {
-    watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user found user');
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user found user');
     return $found_user;
   }
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user no user found');
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user 1');
   $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
     'name' => $name,
@@ -100,10 +109,13 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
     'status' => 1,
     'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
   ));
-  watchdog(WATCHDOG_INFO, 'alumni_cas_auth_load_user new user = ' . $name);
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_load_user 2');
   return $new_user;
 }
 
+/**
+ * Logs the user into Cas
+ */
 function alumni_cas_auth_login() {
   global $user;
   if (user_is_logged_in()) {
@@ -128,6 +140,9 @@ function alumni_cas_auth_login() {
   }
 }
 
+/**
+ * Gets the Cas User Name
+ */
 function _alumni_cas_auth_get_user_name($url) {
   $return = drupal_http_request($url);
   if ($return->code == 200) {
@@ -144,10 +159,8 @@ function _alumni_cas_auth_get_user_name($url) {
  */
 function _alumni_cas_auth_force_login() {
 
-  //watchdog(WATCHDOG_INFO, 'in _alumni_cas_auth_force_login');
-
   // The 'alumni_cas_auth' page is a shortcut to force authentication.
-  if (arg(0) == 'alumni-cas-login') {
+  if (arg(0) == 'alumni-cas-auth-login' || arg(0) == 'alumni-cas-auth-check-auth') {
     return TRUE;
   }
 
@@ -193,6 +206,9 @@ function _alumni_cas_auth_force_login() {
   return $force_login;
 }
 
+/**
+ * Implementation of hook_file_download
+ */
 function alumni_cas_auth_file_download($uri, $field_type = 'file') {
   if (variable_get('alumni_cas_auth_check_private_file_access', 1) && drupal_match_path($uri,'private://' . variable_get('alumni_cas_auth_private_files_base_path', ''))) {
     if (!user_access('download alumni cas private files')) {
@@ -212,4 +228,41 @@ function alumni_cas_auth_gsb_restricted_pages_info() {
       'callback' => 'alumni_cas_auth_login',
     ),
   );
+}
+
+/**
+ * Check if the User has been authenticated with Cas
+ */
+function alumni_cas_auth_check_authentication() {
+  return drupal_json_output(array('authenication_status' => TRUE));
+}
+
+/**
+ * Logs the current user out, and redirects to Cas logout page.
+ */
+function alumni_cas_auth_logout_action() {
+  global $user;
+  module_invoke_all('user_logout', $user);
+  // Destroy the current session, and reset $user to the anonymous user.
+  session_destroy();
+  $path = 'https://alumni-gsb.stanford.edu/cas/service/logoff?pg=yes';
+  drupal_goto($path);
+}
+
+/**
+ * Logs the current user into Cas.
+ */
+function alumni_cas_auth_login_action() {
+  $path_alias = $_SERVER["HTTP_REFERER"];
+  $parsed_url = drupal_parse_url($path_alias);
+  $next_url = $parsed_url['query']['nu'];
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action next_url = ' . $next_url);
+  $pos = strpos($next_url, 'goto=');
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action pos = ' . $pos);
+  if ($pos != -1) {
+    $next_url = substr($next_url, $pos + strlen('goto='));
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action bingo next_url = ' . $next_url);
+    $next_url = str_replace('*', '/', $next_url);
+    drupal_goto($next_url);
+  }
 }
