@@ -68,6 +68,7 @@ function alumni_cas_auth_init() {
     'current_path_alias' => drupal_get_path_alias(current_path()),
   );
   drupal_add_js( array ("alumni_cas_auth" => $settings), 'setting');
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_init current_path = ' . current_path());
   if (_alumni_cas_auth_force_login()) {
     alumni_cas_auth_login();
   }
@@ -116,27 +117,35 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
 /**
  * Logs the user into Cas
  */
-function alumni_cas_auth_login() {
+function alumni_cas_auth_login($next_url = null) {
   global $user;
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 0');
   if (user_is_logged_in()) {
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 1');
     // user is logged in, nothing more to do
     return;
   }
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 2');
   $alumni_cas_user = alumni_cas_auth_user_init();
   // check if we are returning from a cas login
   if ($alumni_cas_user->returning_from_cas_login()) {
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 3');
     // check authenication response from cas
     if (!$alumni_cas_user->is_authenicated()) {
       // authenicate the cas user
-      $alumni_cas_user->authenicate();
+      watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 4');
+      $alumni_cas_user->authenicate($next_url);
     }
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 5');
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
+      watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 6');
       user_login_finalize();
     }
   } else {
+    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login 7');
     // authenicate the cas user
-    $alumni_cas_user->authenicate();
+    $alumni_cas_user->authenicate($next_url);
   }
 }
 
@@ -160,9 +169,17 @@ function _alumni_cas_auth_get_user_name($url) {
 function _alumni_cas_auth_force_login() {
 
   // The 'alumni_cas_auth' page is a shortcut to force authentication.
+  /*
   if (arg(0) == 'alumni-cas-auth-login' || arg(0) == 'alumni-cas-auth-check-auth') {
     return TRUE;
   }
+  */
+
+  /*
+  if (arg(0) == 'alumni-cas-auth-login') {
+    return TRUE;
+  }
+  */
 
   // Do not force login for XMLRPC, Cron, or Drush.
   if (stristr($_SERVER['SCRIPT_FILENAME'], 'xmlrpc.php')) {
@@ -234,6 +251,7 @@ function alumni_cas_auth_gsb_restricted_pages_info() {
  * Check if the User has been authenticated with Cas
  */
 function alumni_cas_auth_check_authentication() {
+  alumni_cas_auth_login(current_path());
   return drupal_json_output(array('authenication_status' => TRUE));
 }
 
@@ -249,20 +267,51 @@ function alumni_cas_auth_logout_action() {
   drupal_goto($path);
 }
 
+
 /**
  * Logs the current user into Cas.
  */
 function alumni_cas_auth_login_action() {
+  global $base_url;
+
+  $referer = $_SERVER["HTTP_REFERER"];
+  $next_url = str_replace('/', '*', $referer);
+  $next_url = str_replace('?', '$', $next_url);
+  $next_url = str_replace('&', '$', $next_url);
+
+  alumni_cas_auth_login($GLOBALS['base_url'] . '/' . $_SERVER['REQUEST_URI'] . '$goto=' . $next_url);
+
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action referer = ' . $referer);
+
+  $parsed_url = drupal_parse_url($referer);
+  $next_url = str_replace('*', '/', $parsed_url['query']['nu']);
+  $goto = explode('goto=', $next_url);
+
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action goto[1] = ' . $goto[1]);
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action base_url = ' . $base_url);
+  $base = str_replace('https', 'http', $base_url);
+  $goto = str_replace('https', 'http', $goto[1]);
+  $goto = str_replace($base, '', $goto);
+  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action goto[1] = ' . $goto);
+
+  drupal_goto($goto);
+
+}
+
+/**
+ * Logs the current user into Cas.
+ */
+/*
+function alumni_cas_auth_login_action() {
   $path_alias = $_SERVER["HTTP_REFERER"];
   $parsed_url = drupal_parse_url($path_alias);
   $next_url = $parsed_url['query']['nu'];
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action next_url = ' . $next_url);
   $pos = strpos($next_url, 'goto=');
-  watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action pos = ' . $pos);
   if ($pos != -1) {
     $next_url = substr($next_url, $pos + strlen('goto='));
-    watchdog(WATCHDOG_INFO, 'in alumni_cas_auth_login_action bingo next_url = ' . $next_url);
     $next_url = str_replace('*', '/', $next_url);
     drupal_goto($next_url);
   }
 }
+*/
+
