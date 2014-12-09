@@ -127,6 +127,7 @@ function alumni_cas_auth_login($next_url = null) {
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
       user_login_finalize();
+      drupal_set_message(t('Successfully logged in'), 'status', FALSE);
     }
   } else {
     // authenicate the cas user
