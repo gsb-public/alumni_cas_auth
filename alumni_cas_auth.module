@@ -62,9 +62,18 @@ function alumni_cas_auth_permission() {
  * Log in user if cas authenicated successfull
  */
 function alumni_cas_auth_init() {
+  $cas_getLogin_type_url = variable_get('cas_getLogin_type_url', '');
+  $parse_url = drupal_parse_url($cas_getLogin_type_url);
+  if (isset($parse_url['query'])) {
+    $cas_getLogin_type_url = $cas_getLogin_type_url . '&callback=?';
+  }
+  else {
+    $cas_getLogin_type_url = $cas_getLogin_type_url . '?callback=?';
+  }
   drupal_add_js(drupal_get_path('module', 'alumni_cas_auth') . '/js/alumni_cas_auth.js');
   $settings = array (
     'path' => base_path(),
+    'cas_getLogin_type_url' => $cas_getLogin_type_url
   );
   drupal_add_js( array ("alumni_cas_auth" => $settings), 'setting');
   if (_alumni_cas_auth_force_login()) {
