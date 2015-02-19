@@ -2,7 +2,7 @@
 
 Drupal.behaviors.alumni_case_auth = {
   attach: function (context, settings) {
-    if (jQuery('.cas-login')) {
+    if (jQuery('.cas-login').length > 0) {
       // Check if user is authenticated with Cas
       jQuery.getJSON( settings.alumni_cas_auth.cas_getLogin_type_url, function(data) {
         console.log(data);
