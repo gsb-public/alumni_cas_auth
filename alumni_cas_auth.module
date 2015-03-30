@@ -136,6 +136,7 @@ function alumni_cas_auth_login($next_url = null) {
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
       user_login_finalize();
+      drupal_set_message('You have successfully logged in');
     }
   } else {
     // authenicate the cas user
@@ -245,6 +246,7 @@ function alumni_cas_auth_logout_action() {
   // Destroy the current session, and reset $user to the anonymous user.
   session_destroy();
   $path = 'https://alumni-gsb.stanford.edu/cas/service/logoff?pg=yes';
+  drupal_set_message('You have successfully logged out');
   drupal_goto($path);
 }
 
