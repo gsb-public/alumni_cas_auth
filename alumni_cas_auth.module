@@ -242,9 +242,11 @@ function alumni_cas_auth_check_authentication() {
  */
 function alumni_cas_auth_logout_action() {
   global $user;
-  module_invoke_all('user_logout', $user);
   // Destroy the current session, and reset $user to the anonymous user.
-  session_destroy();
+  if (user_is_logged_in()) {
+    module_invoke_all('user_logout', $user);
+    session_destroy();
+  }
   $path = 'https://alumni-gsb.stanford.edu/cas/service/logoff?pg=yes';
   drupal_set_message('You have successfully logged out');
   drupal_goto($path);
