@@ -248,7 +248,6 @@ function alumni_cas_auth_logout_action() {
     session_destroy();
   }
   $path = 'https://alumni-gsb.stanford.edu/cas/service/logoff?pg=yes';
-  drupal_set_message('You have successfully logged out');
   drupal_goto($path);
 }
 
