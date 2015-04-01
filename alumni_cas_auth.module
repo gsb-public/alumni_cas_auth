@@ -121,7 +121,7 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
  */
 function alumni_cas_auth_login($next_url = null) {
   global $user;
-  if (user_is_logged_in()) {
+  if (user_is_logged_in() && in_array('alumnipg', $user->roles)) {
     // user is logged in, nothing more to do
     return;
   }
