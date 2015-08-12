@@ -133,6 +133,9 @@ function alumni_cas_auth_login($next_url = null) {
       // authenicate the cas user
       $alumni_cas_user->authenicate($next_url);
     }
+    // call service
+    // if not 'y', send to 403 (access denied)
+    $is_gsb_alum = _alumni_cas_auth_is_user_gsb_alum($alumni_cas_user->get_user_id());
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
       user_login_finalize();
@@ -153,6 +156,24 @@ function _alumni_cas_auth_get_user_name($url) {
     return $return->data;
   }
   return '';
+}
+
+/**
+ * Gets the Cas User Name
+ */
+function _alumni_cas_auth_is_user_gsb_alum($user_id) {
+  watchdog('_alumni_cas_auth_is_user_gsb_alum',"user_id = ".$user_id,array(),WATCHDOG_NOTICE);
+  $url = 'https://pgnet.stanford.edu/section/data/hasRight.jsp?ri=48&usrnm=' . $user_id;
+  $return = drupal_http_request($url);
+  watchdog('_alumni_cas_auth_is_user_gsb_alum',"return->code = ".$return->code,array(),WATCHDOG_NOTICE);
+  watchdog('_alumni_cas_auth_is_user_gsb_alum',"return->data = ".$return->data,array(),WATCHDOG_NOTICE);
+  if ($return->code == 200) {
+    if ($return->data == 'y') {
+      watchdog('_alumni_cas_auth_is_user_gsb_alum',"returning TRUE ",array(),WATCHDOG_NOTICE);
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 /**
