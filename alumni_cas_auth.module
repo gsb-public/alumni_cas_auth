@@ -162,14 +162,10 @@ function _alumni_cas_auth_get_user_name($url) {
  * Gets the Cas User Name
  */
 function _alumni_cas_auth_is_user_gsb_alum($user_id) {
-  watchdog('_alumni_cas_auth_is_user_gsb_alum',"user_id = ".$user_id,array(),WATCHDOG_NOTICE);
   $url = 'https://pgnet.stanford.edu/section/data/hasRight.jsp?ri=48&usrnm=' . $user_id;
   $return = drupal_http_request($url);
-  watchdog('_alumni_cas_auth_is_user_gsb_alum',"return->code = ".$return->code,array(),WATCHDOG_NOTICE);
-  watchdog('_alumni_cas_auth_is_user_gsb_alum',"return->data = ".$return->data,array(),WATCHDOG_NOTICE);
   if ($return->code == 200) {
     if ($return->data == 'y') {
-      watchdog('_alumni_cas_auth_is_user_gsb_alum',"returning TRUE ",array(),WATCHDOG_NOTICE);
       return TRUE;
     }
   }
