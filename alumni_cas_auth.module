@@ -166,7 +166,8 @@ function _alumni_cas_auth_get_user_name($url) {
  */
 function _alumni_cas_auth_is_user_gsb_alum($user_id) {
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum user_id = ' . $user_id);
-  $url = 'https://pgnet.stanford.edu/section/data/hasRight.jsp?ri=48&usreid=' . $user_id;
+  $cas_hasright_key = variable_get('cas_hasright_key', '');
+  $url = 'https://pgnet.stanford.edu/section/data/hasRight.jsp?ri=48&usreid=' . $user_id . '&key=' . $cas_hasright_key;
   $return = drupal_http_request($url);
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum return code = ' . $return->code);
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum return data = ' . $return->data);
