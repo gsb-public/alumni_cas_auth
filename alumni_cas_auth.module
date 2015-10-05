@@ -172,7 +172,8 @@ function _alumni_cas_auth_is_user_gsb_alum($user_id) {
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum return code = ' . $return->code);
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum return data = ' . $return->data);
   if ($return->code == 200) {
-    if ($return->data == 'y') {
+    $data = trim($return->data);
+    if ($data == 'y') {
       watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum - returning true');
       return TRUE;
     }
