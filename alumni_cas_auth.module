@@ -293,6 +293,9 @@ function alumni_cas_auth_login_action() {
   // Get the goto path from the next_url and...
   // goto it... word.
   $goto_path = _alumni_cas_auth_get_goto_path($next_url);
+  if (empty($goto_path)) {
+    $goto_path = '<front>';
+  }
   drupal_goto($goto_path);
 
 }
@@ -312,7 +315,10 @@ function _alumni_cas_auth_create_nexturl($next_url) {
  */
 function _alumni_cas_auth_get_nexturl($request_uri) {
   $parsed_url = drupal_parse_url($request_uri);
-  $next_url = str_replace('*', '/', $parsed_url['query']['nu']);
+  $next_url = '';
+  if (!empty($parsed_url['query']['nu'])) {
+    $next_url = str_replace('*', '/', $parsed_url['query']['nu']);
+  }
   return $next_url;
 }
 
@@ -324,7 +330,13 @@ function _alumni_cas_auth_get_goto_path($next_url) {
 
   $goto_path = explode('goto=', $next_url);
   $base = str_replace('https', 'http', $base_url);
-  $goto_path = str_replace('https', 'http', $goto_path[1]);
+  if (is_array($goto_path) && !empty($goto_path[1])) {
+    $goto_path = str_replace('https', 'http', $goto_path[1]);
+  }
+  else
+  {
+    $goto_path = '';
+  }
   $goto_path = str_replace($base, '', $goto_path);
   return $goto_path;
 }
