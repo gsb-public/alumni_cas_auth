@@ -139,10 +139,12 @@ function alumni_cas_auth_login($next_url = null) {
     if (!$is_gsb_alum) {
       drupal_access_denied();
     }
-    $user = alumni_cas_auth_load_user($alumni_cas_user);
-    if ($user->uid) {
-      user_login_finalize();
-      drupal_set_message('You have successfully logged in');
+    else {
+      $user = alumni_cas_auth_load_user($alumni_cas_user);
+      if ($user->uid) {
+        user_login_finalize();
+        drupal_set_message('You have successfully logged in');
+      }
     }
   } else {
     // authenicate the cas user
