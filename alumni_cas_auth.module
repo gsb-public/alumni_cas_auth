@@ -138,6 +138,8 @@ function alumni_cas_auth_login($next_url = null) {
     $is_gsb_alum = _alumni_cas_auth_is_user_gsb_alum($alumni_cas_user->get_user_id());
     if (!$is_gsb_alum) {
       drupal_access_denied();
+      module_invoke_all('exit');
+      drupal_exit();
     }
     $user = alumni_cas_auth_load_user($alumni_cas_user);
     if ($user->uid) {
