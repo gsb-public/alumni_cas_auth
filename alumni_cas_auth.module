@@ -164,9 +164,13 @@ function _alumni_cas_auth_get_user_name($url) {
 }
 
 /**
- * Gets the Cas User Name
+ * Determines if the CAS user is a gsb alum
  */
 function _alumni_cas_auth_is_user_gsb_alum($user_id) {
+  // Commenting out the code for handling this for now. 
+  // We may turn back on once CAS pg settings allow us to set faculty and staff as additional roles
+  return TRUE;
+  /*
   $cas_hasright_key = variable_get('cas_hasright_key', '');
   $url = 'https://pgnet.stanford.edu/section/data/hasRight.jsp?ri=48&usreid=' . $user_id . '&key=' . $cas_hasright_key;
   $return = drupal_http_request($url);
@@ -178,6 +182,7 @@ function _alumni_cas_auth_is_user_gsb_alum($user_id) {
   }
   watchdog(WATCHDOG_INFO, '_alumni_cas_auth_is_user_gsb_alum - returning false');
   return FALSE;
+  */
 }
 
 /**
