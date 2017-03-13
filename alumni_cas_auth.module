@@ -100,16 +100,27 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   $user_name = str_replace('OK:', '', $user_name);
   $user_name = trim($user_name);
   $name = $user_name . ' ' . substr($user_id,-4);
+  $email = $user_name . '@alumni.example.com';
+  $login_name = $user_name;
+  //checking xjst value available in request array
+  if(isset($_REQUEST['xjst']) && $_REQUEST['xjst'] != "") {
+      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst']);
+      if($user_data->loginname != "")
+      $login_name = $user_data->loginname;
+      if($user_data->email != "")
+      $email = $user_data->email;
+  }
   $found_user = user_load_by_name($name);
   if ($found_user) {
+    $found_user->init = $login_name;
     return $found_user;
   }
   $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
     'name' => $name,
     'pass' => '',
-    'mail' => $user_name . '@alumni.example.com',
-    'init' => $user_name,
+    'mail' => $email,
+    'init' => $login_name,
     'status' => 1,
     'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
   ));
@@ -122,8 +133,16 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
 function alumni_cas_auth_login($next_url = null) {
   global $user;
   if (user_is_logged_in() && in_array('alumnipg', $user->roles)) {
-    // user is logged in, nothing more to do
-    return;
+    if (isset($_REQUEST['xjst']) && $_REQUEST['xjst'] != "") {
+      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst']);
+      if ($user_data->loginname != "")
+      $user->init = $user_data->loginname;
+    } elseif ($_REQUEST['cas_perm2'] != "") {
+      $data_split = explode("|", $_REQUEST['cas_perm2']);
+      $login_name = substr($data_split[0], 3);
+      $user->init = $login_name;
+    } 
+    return $user;
   }
   $alumni_cas_user = alumni_cas_auth_user_init();
   // check if we are returning from a cas login
@@ -346,4 +365,16 @@ function _alumni_cas_auth_get_goto_path($next_url) {
   }
   $goto_path = str_replace($base, '', $goto_path);
   return $goto_path;
+}
+
+/**
+ * Get the cas user data from salesforce api
+ */
+function _alumni_cas_auth_salesforce_data($xjst) {
+  $url = "https://stanfordgsbapps.secure.force.com/core/services/apexrest/decodepgalumid?suid=".$xjst;
+  $return = drupal_http_request($url);
+  $user_data = array();
+  if (isset($return->data) ) 
+  $user_data = json_decode($return->data);
+  return $user_data;
 }
