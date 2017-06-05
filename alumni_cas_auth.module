@@ -104,9 +104,9 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
   $login_name = $user_name;
   //checking xjst value available in request array
   if(isset($_REQUEST['xjst']) && $_REQUEST['xjst'] != "") {
-      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst']);
-      if($user_data->loginname != "")
-      $login_name = $user_data->loginname;
+      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst'],'suid');
+      if($user_data->suid != "")
+      $login_name = "00".$user_data->suid;
       if($user_data->email != "")
       $email = $user_data->email;
   }
@@ -134,13 +134,18 @@ function alumni_cas_auth_login($next_url = null) {
   global $user;
   if (user_is_logged_in() && in_array('alumnipg', $user->roles)) {
     if (isset($_REQUEST['xjst']) && $_REQUEST['xjst'] != "") {
-      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst']);
-      if ($user_data->loginname != "")
-      $user->init = $user_data->loginname;
+      $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst'],'suid');
+      if($user_data->suid != "" )
+      $user->init =  "00".$user_data->suid;
+      $user->mail = $user_data->email;
     } elseif ($_REQUEST['cas_perm2'] != "") {
       $data_split = explode("|", $_REQUEST['cas_perm2']);
       $login_name = substr($data_split[0], 3);
-      $user->init = $login_name;
+      $user_data = _alumni_cas_auth_salesforce_data($login_name,'loginname');
+      $user->mail = $user_data->email;
+      if($user_data->suid != "" )
+      $user->init = $user_data->suid;
+      
     } 
     return $user;
   }
@@ -370,8 +375,8 @@ function _alumni_cas_auth_get_goto_path($next_url) {
 /**
  * Get the cas user data from salesforce api
  */
-function _alumni_cas_auth_salesforce_data($xjst) {
-  $url = "https://stanfordgsbapps.secure.force.com/core/services/apexrest/decodepgalumid?suid=".$xjst;
+function _alumni_cas_auth_salesforce_data($xjst,$type) {
+  $url = "https://stanfordgsbapps.secure.force.com/core/services/apexrest/decodepgalumid?".$type."=".$xjst;
   $return = drupal_http_request($url);
   $user_data = array();
   if (isset($return->data) ) 
