@@ -107,6 +107,8 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
       $user_data = _alumni_cas_auth_salesforce_data($_REQUEST['xjst'],'suid');
       if($user_data->suid != "")
       $login_name = "00".$user_data->suid;
+      //for making the login id to 10 digits
+      $login_name = substr($login_name, -10);
       if($user_data->email != "")
       $email = $user_data->email;
   }
