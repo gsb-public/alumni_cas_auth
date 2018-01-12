@@ -113,11 +113,19 @@ function alumni_cas_auth_load_user($alumni_cas_user) {
       $email = $user_data->email;
   }
   $found_user = user_load_by_name($name);
+  $alumnipg_role = user_role_load_by_name('alumnipg');
   if ($found_user) {
     $found_user->init = $login_name;
+    user_save($found_user, array(
+      'name' => $found_user->name,
+      'pass' => '',
+      'mail' => $found_user->mail,
+      'init' => $found_user->init,
+      'status' => 1,
+      'roles' => array($alumnipg_role->rid => $alumnipg_role->rid)
+    ));
     return $found_user;
   }
-  $alumnipg_role = user_role_load_by_name('alumnipg');
   $new_user = user_save('', array(
     'name' => $name,
     'pass' => '',
@@ -381,7 +389,8 @@ function _alumni_cas_auth_salesforce_data($xjst,$type) {
   $url = "https://stanfordgsbapps.secure.force.com/core/services/apexrest/decodepgalumid?".$type."=".$xjst;
   $return = drupal_http_request($url);
   $user_data = array();
-  if (isset($return->data) ) 
-  $user_data = json_decode($return->data);
+  if (isset($return->data) ) {
+    $user_data = json_decode($return->data);
+  }
   return $user_data;
 }
