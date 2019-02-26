@@ -130,5 +130,25 @@ function alumni_cas_auth_admin_settings() {
     '#description' => t("Drupal path or URL. Enter a destination if you want a user to be directed to this page after logging out of simplesaml, or leave blank to direct users back to the previous page. An example path is <em>blog</em> for the blog page or <em>&lt;front&gt;</em> for the front page."),
   );
 
+  // Auth url
+  $form['misc']['alumni_cas_auth_auth_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Auth Url'),
+    '#default_value' => variable_get('alumni_cas_auth_auth_url', ''),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#description' => t("URL. Enter a Auth Url"),
+  );
+
+  // Cas
+  $form['misc']['cas_getLogin_type_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Cas Login Url'),
+    '#default_value' => variable_get('cas_getLogin_type_url', ''),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#description' => t("URL. Enter a Cas login type Url"),
+  );
+
   return system_settings_form($form);
 }

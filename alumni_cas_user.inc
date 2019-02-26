@@ -15,7 +15,9 @@ class AlumniCasUser {
       $request_url = $GLOBALS['base_url'] . '/' . $_SERVER['REQUEST_URI'];
       $next_url = _alumni_cas_auth_create_nexturl($request_url);
     }
-    $auth_url = 'https://alumni-gsb.stanford.edu/cas/service/checkauth?pg=yes&am=tpartyFA&exid=gsb&nu=' . $next_url;
+    $auth_url = variable_get('alumni_cas_auth_auth_url', '');
+    //$auth_url = 'https://alumni-gsb.stanford.edu/cas/service/checkauth?pg=yes&am=tpartyFA&exid=gsb&nu=' . $next_url;
+    $auth_url .= $next_url;
     drupal_goto($auth_url, array(), 307);
   }
 
